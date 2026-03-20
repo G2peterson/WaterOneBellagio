@@ -1,75 +1,293 @@
-let scene = 0;
+const sceneImage = document.getElementById("sceneImage");
+const speakerText = document.getElementById("speakerText");
+const questionText = document.getElementById("questionText");
+const feedbackText = document.getElementById("feedbackText");
 
-const scenes = [
+const answersDiv = document.getElementById("answers");
+const answer1 = document.getElementById("answer1");
+const answer2 = document.getElementById("answer2");
+const answer3 = document.getElementById("answer3");
+
+const meterArea = document.getElementById("meterArea");
+const meterLabel = document.getElementById("meterLabel");
+const meter = document.getElementById("meter");
+const targetZone = document.getElementById("targetZone");
+const needle = document.getElementById("needle");
+const lockBtn = document.getElementById("lockBtn");
+
+const continueBtn = document.getElementById("continueBtn");
+
+let stepIndex = 0;
+let answered = false;
+let meterRunning = false;
+let meterInterval = null;
+let needlePos = 0;
+let direction = 1;
+let currentSkillKey = "";
+let currentSkillResult = "";
+
+const skillScores = {
+  launch: 0,
+  insertion: 0,
+  landing: 0
+};
+
+const steps = [
   {
+    type: "question",
     image: "scene1.png",
-    question: "Where is the positive pole of Earth?",
-    answers: ["North Pole", "South Pole"],
-    correct: 1,
-    explanation: "Earth’s geographic North is actually magnetic south, because opposite poles attract."
+    speaker: "Orion",
+    question: "People of Earth. I have landed at your planet’s positive pole. Where will you search?",
+    answers: [
+      {
+        text: "North Pole",
+        correct: false,
+        feedback:
+          "You chose the North Pole. Your compass points there because it is drawn toward a magnetic opposite. Reconsider your orientation."
+      },
+      {
+        text: "South Pole",
+        correct: true,
+        feedback:
+          "You questioned the label. You chose correctly."
+      }
+    ]
   },
   {
+    type: "question",
     image: "scene2.png",
-    question: "In vacuum, what falls faster?",
-    answers: ["Feather", "Hammer"],
-    correct: 0,
-    explanation: "They fall at the same rate in vacuum, no air resistance."
+    speaker: "Orion",
+    question: "In a vacuum, which falls faster?",
+    answers: [
+      {
+        text: "Feather",
+        correct: false,
+        feedback:
+          "You chose the feather alone. In a vacuum, neither is faster. Reconsider."
+      },
+      {
+        text: "Hammer",
+        correct: false,
+        feedback:
+          "You chose the hammer alone. In a vacuum, neither is faster. Reconsider."
+      },
+      {
+        text: "They fall at the same rate",
+        correct: true,
+        feedback:
+          "Correct. Without air resistance, both fall at the same rate."
+      }
+    ]
   },
   {
+    type: "question",
     image: "scene3.png",
-    question: "You push 5 gallons of water in space, what happens?",
-    answers: ["You move backward", "Nothing happens"],
-    correct: 0,
-    explanation: "Newton’s third law, pushing mass moves you opposite."
+    speaker: "Orion",
+    question: "You are in free space holding five gallons of sealed water. You push it away from you. What happens next?",
+    answers: [
+      {
+        text: "You move backward",
+        correct: true,
+        feedback:
+          "You understand reaction mass. The water moves away. You move in equal opposition."
+      },
+      {
+        text: "Nothing happens",
+        correct: false,
+        feedback:
+          "You chose no motion. Force creates movement in both directions. Reconsider."
+      },
+      {
+        text: "You follow the water",
+        correct: false,
+        feedback:
+          "You chose forward motion. Motion separates you from the object. Reconsider."
+      }
+    ]
+  },
+  {
+    type: "skill",
+    image: "scene3.png",
+    speaker: "Orion",
+    label: "Launch Alignment",
+    prompt: "Launch window open. Align and commit.",
+    skillKey: "launch"
+  },
+  {
+    type: "skill",
+    image: "scene3.png",
+    speaker: "Voss",
+    label: "Orbital Insertion",
+    prompt: "Water is critical. I am going now. Choose speed or alignment.",
+    skillKey: "insertion"
+  },
+  {
+    type: "skill",
+    image: "scene3.png",
+    speaker: "Orion",
+    label: "Landing Control",
+    prompt: "Arrival is not completion. Control descent.",
+    skillKey: "landing"
+  },
+  {
+    type: "result",
+    image: "scene3.png",
+    speaker: "Orion"
   }
 ];
 
-const img = document.getElementById("sceneImage");
-const question = document.getElementById("questionText");
-const a1 = document.getElementById("answer1");
-const a2 = document.getElementById("answer2");
-const feedback = document.getElementById("feedbackText");
-const cont = document.getElementById("continueBtn");
-
-let answered = false;
-
-function loadScene() {
-  const s = scenes[scene];
-
-  img.src = s.image;
-  question.textContent = s.question;
-  a1.textContent = s.answers[0];
-  a2.textContent = s.answers[1];
-  feedback.textContent = "";
-  answered = false;
+function hideAllInteractiveAreas() {
+  answersDiv.classList.add("hidden");
+  meterArea.classList.add("hidden");
+  continueBtn.disabled = true;
+  feedbackText.textContent = "";
 }
 
-a1.onclick = () => checkAnswer(0);
-a2.onclick = () => checkAnswer(1);
+function renderStep() {
+  const step = steps[stepIndex];
+  hideAllInteractiveAreas();
+  answered = false;
 
-function checkAnswer(choice) {
+  sceneImage.src = step.image;
+  speakerText.textContent = step.speaker ? step.speaker : "";
+  questionText.textContent = "";
+  answer1.classList.add("hidden");
+  answer2.classList.add("hidden");
+  answer3.classList.add("hidden");
+
+  if (step.type === "question") {
+    renderQuestion(step);
+  } else if (step.type === "skill") {
+    renderSkill(step);
+  } else if (step.type === "result") {
+    renderResult();
+  }
+}
+
+function renderQuestion(step) {
+  answersDiv.classList.remove("hidden");
+  questionText.textContent = step.question;
+
+  const buttons = [answer1, answer2, answer3];
+
+  buttons.forEach((btn, index) => {
+    if (step.answers[index]) {
+      btn.classList.remove("hidden");
+      btn.textContent = step.answers[index].text;
+      btn.disabled = false;
+      btn.onclick = () => handleAnswer(step.answers[index]);
+    } else {
+      btn.classList.add("hidden");
+    }
+  });
+}
+
+function handleAnswer(answer) {
   if (answered) return;
 
-  const s = scenes[scene];
+  feedbackText.textContent = answer.feedback;
 
-  if (choice === s.correct) {
-    feedback.textContent = "Correct";
+  if (answer.correct) {
+    answered = true;
+    continueBtn.disabled = false;
   } else {
-    feedback.textContent = "Wrong: " + s.explanation;
+    continueBtn.disabled = true;
   }
-
-  answered = true;
 }
 
-cont.onclick = () => {
-  if (!answered) return;
+function renderSkill(step) {
+  meterArea.classList.remove("hidden");
+  questionText.textContent = step.prompt;
+  meterLabel.textContent = step.label;
+  currentSkillKey = step.skillKey;
+  currentSkillResult = "";
+  continueBtn.disabled = true;
+  startMeter();
+}
 
-  scene++;
-  if (scene >= scenes.length) {
-    scene = 0;
+function startMeter() {
+  if (meterInterval) clearInterval(meterInterval);
+
+  meterRunning = true;
+  needlePos = 0;
+  direction = 1;
+  needle.style.left = "0px";
+
+  meterInterval = setInterval(() => {
+    needlePos += direction * 5;
+
+    const maxPos = meter.clientWidth - needle.clientWidth;
+
+    if (needlePos >= maxPos || needlePos <= 0) {
+      direction *= -1;
+    }
+
+    needle.style.left = `${needlePos}px`;
+  }, 16);
+}
+
+lockBtn.onclick = () => {
+  if (!meterRunning) return;
+
+  clearInterval(meterInterval);
+  meterRunning = false;
+
+  const targetLeft = targetZone.offsetLeft;
+  const targetRight = targetLeft + targetZone.offsetWidth;
+
+  if (needlePos >= targetLeft && needlePos <= targetRight) {
+    currentSkillResult = "optimal";
+    skillScores[currentSkillKey] = 2;
+    feedbackText.textContent = "Optimal alignment.";
+  } else if (
+    needlePos >= targetLeft - 50 &&
+    needlePos <= targetRight + 50
+  ) {
+    currentSkillResult = "acceptable";
+    skillScores[currentSkillKey] = 1;
+    feedbackText.textContent = "Acceptable alignment.";
+  } else {
+    currentSkillResult = "misaligned";
+    skillScores[currentSkillKey] = 0;
+    feedbackText.textContent = "Misalignment detected.";
   }
 
-  loadScene();
+  continueBtn.disabled = false;
 };
+
+function renderResult() {
+  const total =
+    skillScores.launch +
+    skillScores.insertion +
+    skillScores.landing;
+
+  if (total >= 5) {
+    questionText.textContent = "Water delivered. Earth stabilizing.";
+    feedbackText.textContent = "Status: SUCCESS";
+  } else if (total >= 3) {
+    questionText.textContent = "Delivery achieved with deviation.";
+    feedbackText.textContent = "Status: PARTIAL SUCCESS";
+  } else {
+    questionText.textContent = "Delivery incomplete. Reattempt required.";
+    feedbackText.textContent = "Status: REATTEMPT";
+  }
+
+  continueBtn.disabled = false;
+}
+
+continueBtn.onclick = () => {
+  if (stepIndex < steps.length - 1) {
+    stepIndex += 1;
+  } else {
+    stepIndex = 0;
+    skillScores.launch = 0;
+    skillScores.insertion = 0;
+    skillScores.landing = 0;
+  }
+
+  renderStep();
+};
+
+renderStep();
 
 loadScene();
