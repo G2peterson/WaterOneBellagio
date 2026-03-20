@@ -2,28 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Water One Bellagio</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="game-container">
+    <div class="scene">
+      <img id="sceneImage" src="scene1.png" alt="Current scene">
+    </div>
 
-<div class="game">
+    <div class="ui">
+      <div id="speakerText" class="speaker"></div>
+      <div id="questionText" class="question"></div>
+      <div id="feedbackText" class="feedback"></div>
 
-  <img id="sceneImage" src="scene1.png">
+      <div id="answers" class="answers">
+        <button id="answer1"></button>
+        <button id="answer2"></button>
+        <button id="answer3"></button>
+      </div>
 
-  <p id="questionText"></p>
+      <div id="meterArea" class="meter-area hidden">
+        <div class="meter-label" id="meterLabel"></div>
+        <div id="meter">
+          <div id="targetZone"></div>
+          <div id="needle"></div>
+        </div>
+        <button id="lockBtn">Lock In</button>
+      </div>
 
-  <div class="answers">
-    <button id="answer1"></button>
-    <button id="answer2"></button>
+      <div class="controls">
+        <button id="continueBtn" disabled>Continue</button>
+      </div>
+    </div>
   </div>
 
-  <p id="feedbackText"></p>
-
-  <button id="continueBtn">Continue</button>
-
-</div>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
