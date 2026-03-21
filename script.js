@@ -10,7 +10,6 @@ const answer3 = document.getElementById("answer3");
 
 const meterArea = document.getElementById("meterArea");
 const meterLabel = document.getElementById("meterLabel");
-const meter = document.getElementById("meter");
 const targetZone = document.getElementById("targetZone");
 const needle = document.getElementById("needle");
 const lockBtn = document.getElementById("lockBtn");
@@ -24,7 +23,6 @@ let meterInterval = null;
 let needlePos = 0;
 let direction = 1;
 let currentSkillKey = "";
-let currentSkillResult = "";
 
 const skillScores = {
   launch: 0,
@@ -37,7 +35,7 @@ const steps = [
     type: "question",
     image: "scene1.png",
     speaker: "Orion",
-    question: "People of Earth. I have landed at your planet’s positive pole. Where will you search?",
+    question: "I have landed at your planet's positive pole. Where will you search?",
     answers: [
       {
         text: "North Pole",
@@ -118,7 +116,7 @@ const steps = [
     image: "scene3.png",
     speaker: "Voss",
     label: "Orbital Insertion",
-    prompt: "Water is critical. I am going now. Choose speed or alignment.",
+    prompt: "Water is critical. I am going now. Align your insertion.",
     skillKey: "insertion"
   },
   {
@@ -136,24 +134,25 @@ const steps = [
   }
 ];
 
-function hideAllInteractiveAreas() {
+function hideAll() {
   answersDiv.classList.add("hidden");
   meterArea.classList.add("hidden");
-  continueBtn.disabled = true;
   feedbackText.textContent = "";
+  continueBtn.disabled = true;
+
+  answer1.classList.add("hidden");
+  answer2.classList.add("hidden");
+  answer3.classList.add("hidden");
 }
 
 function renderStep() {
   const step = steps[stepIndex];
-  hideAllInteractiveAreas();
+  hideAll();
   answered = false;
 
   sceneImage.src = step.image;
-  speakerText.textContent = step.speaker ? step.speaker : "";
+  speakerText.textContent = step.speaker || "";
   questionText.textContent = "";
-  answer1.classList.add("hidden");
-  answer2.classList.add("hidden");
-  answer3.classList.add("hidden");
 
   if (step.type === "question") {
     renderQuestion(step);
@@ -171,11 +170,13 @@ function renderQuestion(step) {
   const buttons = [answer1, answer2, answer3];
 
   buttons.forEach((btn, index) => {
-    if (step.answers[index]) {
+    const answer = step.answers[index];
+
+    if (answer) {
       btn.classList.remove("hidden");
-      btn.textContent = step.answers[index].text;
+      btn.textContent = answer.text;
       btn.disabled = false;
-      btn.onclick = () => handleAnswer(step.answers[index]);
+      btn.onclick = () => handleAnswer(answer);
     } else {
       btn.classList.add("hidden");
     }
@@ -200,14 +201,12 @@ function renderSkill(step) {
   questionText.textContent = step.prompt;
   meterLabel.textContent = step.label;
   currentSkillKey = step.skillKey;
-  currentSkillResult = "";
   continueBtn.disabled = true;
   startMeter();
 }
 
 function startMeter() {
-  if (meterInterval) clearInterval(meterInterval);
-
+  clearInterval(meterInterval);
   meterRunning = true;
   needlePos = 0;
   direction = 1;
@@ -216,7 +215,7 @@ function startMeter() {
   meterInterval = setInterval(() => {
     needlePos += direction * 5;
 
-    const maxPos = meter.clientWidth - needle.clientWidth;
+    const maxPos = 550;
 
     if (needlePos >= maxPos || needlePos <= 0) {
       direction *= -1;
@@ -236,18 +235,15 @@ lockBtn.onclick = () => {
   const targetRight = targetLeft + targetZone.offsetWidth;
 
   if (needlePos >= targetLeft && needlePos <= targetRight) {
-    currentSkillResult = "optimal";
     skillScores[currentSkillKey] = 2;
     feedbackText.textContent = "Optimal alignment.";
   } else if (
     needlePos >= targetLeft - 50 &&
     needlePos <= targetRight + 50
   ) {
-    currentSkillResult = "acceptable";
     skillScores[currentSkillKey] = 1;
     feedbackText.textContent = "Acceptable alignment.";
   } else {
-    currentSkillResult = "misaligned";
     skillScores[currentSkillKey] = 0;
     feedbackText.textContent = "Misalignment detected.";
   }
@@ -290,4 +286,3 @@ continueBtn.onclick = () => {
 
 renderStep();
 
-loadScene();
