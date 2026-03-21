@@ -16,10 +16,10 @@ body {
   height: 72vh;
   width: 100%;
   background: #111;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .scene img {
@@ -40,22 +40,23 @@ body {
 }
 
 .speaker {
+  min-height: 20px;
   font-size: 16px;
   font-weight: bold;
   color: #9fd3ff;
-  min-height: 20px;
 }
 
 .question {
+  min-height: 24px;
   font-size: 18px;
-  min-height: 26px;
+  line-height: 1.3;
 }
 
 .feedback {
+  min-height: 42px;
   font-size: 15px;
-  color: #ffd966;
-  min-height: 38px;
   line-height: 1.3;
+  color: #ffd966;
 }
 
 .answers {
@@ -115,10 +116,10 @@ button:disabled {
 #targetZone {
   position: absolute;
   top: 0;
-  height: 100%;
-  width: 90px;
   left: 220px;
-  background: rgba(255,255,255,0.22);
+  width: 90px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.22);
 }
 
 #needle {
